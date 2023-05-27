@@ -11,13 +11,13 @@ const SCREEN_HEIGHT: i32 = 50;
 const FRAME_DURATION: f32 = 75.0;
 
 struct Player {
-    x: i32,
-    y: i32,
+    x: f32,
+    y: f32,
     velocity: f32,
 }
 
 impl Player {
-    fn new(x: i32, y: i32) -> Self {
+    fn new(x: f32, y: f32) -> Self {
         Player {
             x,
             y,
@@ -26,33 +26,33 @@ impl Player {
     }
 
     fn render(&mut self, ctx: &mut BTerm) {
-        ctx.set(0, self.y, YELLOW, BLACK, to_cp437('@'));
+        ctx.set(0, self.y as i32, YELLOW, BLACK, to_cp437('@'));
     }
 
     fn gravity_and_move(&mut self) {
         if self.velocity < 2.0 {
             self.velocity += 0.2;
         }
-        self.y += self.velocity as i32;
-        self.x += 1;
-        if self.y < 0 {
-            self.y = 0;
+        self.y += self.velocity;
+        self.x += 2.5;
+        if self.y < 1. {
+            self.y = 0.;
         }
     }
 
     fn flap(&mut self) {
-        self.velocity = -2.0;
+        self.velocity = -2.;
     }
 }
 
 struct Obstacle {
-    x: i32,
+    x: f32,
     gap_y: i32,
     size: i32,
 }
 
 impl Obstacle {
-    fn new(x: i32, score: i32) -> Self {
+    fn new(x: f32, score: i32) -> Self {
         let mut random = RandomNumberGenerator::new();
         Obstacle {
             x,
@@ -61,8 +61,8 @@ impl Obstacle {
         }
     }
 
-    fn render(&mut self, ctx: &mut BTerm, player_x: i32) {
-        let screen_x = self.x - player_x;
+    fn render(&mut self, ctx: &mut BTerm, player_x: f32) {
+        let screen_x = (self.x - player_x) as i32;
         let half_size = self.size / 2;
 
         for y in 0..self.gap_y - half_size {
@@ -77,8 +77,8 @@ impl Obstacle {
     fn hit_obstacle(&self, player: &Player) -> bool {
         let half_size = self.size / 2;
         let does_x_match = player.x == self.x;
-        let player_above_gap = player.y < self.gap_y - half_size;
-        let player_below_gap = player.y > self.gap_y + half_size;
+        let player_above_gap = (player.y as i32) < self.gap_y - half_size;
+        let player_below_gap = (player.y as i32) > self.gap_y + half_size;
         does_x_match && (player_above_gap || player_below_gap)
     }
 }
@@ -94,9 +94,9 @@ struct State {
 impl State {
     fn new() -> Self {
         State {
-            player: Player::new(5, 25),
+            player: Player::new(5., 25.),
             frame_time: 0.0,
-            obstacle: Obstacle::new(SCREEN_WIDTH, 0),
+            obstacle: Obstacle::new(SCREEN_WIDTH as f32, 0),
             mode: GameMode::Menu,
             score: 0,
         }
@@ -118,19 +118,20 @@ impl State {
         ctx.print(0, 1, &format!("Score: {}", self.score));
 
         self.obstacle.render(ctx, self.player.x);
+
         if self.player.x > self.obstacle.x {
             self.score += 1;
-            self.obstacle = Obstacle::new(self.player.x + SCREEN_WIDTH, self.score);
+            self.obstacle = Obstacle::new(self.player.x + SCREEN_WIDTH as f32, self.score);
         }
-        if self.player.y > SCREEN_HEIGHT || self.obstacle.hit_obstacle(&self.player) {
+        if self.player.y > SCREEN_HEIGHT as f32 || self.obstacle.hit_obstacle(&self.player) {
             self.mode = GameMode::End;
         }
     }
 
     fn restart(&mut self) {
-        self.player = Player::new(5, 25);
+        self.player = Player::new(5., 25.);
         self.frame_time = 0.0;
-        self.obstacle = Obstacle::new(SCREEN_WIDTH, 0);
+        self.obstacle = Obstacle::new(SCREEN_WIDTH as f32, 0);
         self.mode = GameMode::Playing;
         self.score = 0;
     }
