@@ -116,6 +116,8 @@ impl State {
 
         ctx.print(0, 0, "Press SPACE to flap.");
         ctx.print(0, 1, &format!("Score: {}", self.score));
+        ctx.print_right(SCREEN_WIDTH, 0, format!("{}", self.player.x));
+        ctx.print_right(SCREEN_WIDTH, 1, format!("{}", self.obstacle.x));
 
         self.obstacle.render(ctx, self.player.x);
 
